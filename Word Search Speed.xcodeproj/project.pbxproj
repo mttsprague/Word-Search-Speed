@@ -195,6 +195,9 @@
 			);
 			mainGroup = C303AF6F2EF1ADBF00309FA7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C303AFC52EF1B6A900309FA7 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C303AF792EF1ADBF00309FA7 /* Products */;
 			projectDirPath = "";
@@ -615,6 +618,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C303AFC52EF1B6A900309FA7 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = C303AF702EF1ADBF00309FA7 /* Project object */;
 }
