@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C303AF782EF1ADBF00309FA7 /* Word Search: Speed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Word Search: Speed.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C303AF872EF1ADC100309FA7 /* Word Search: SpeedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Word Search: SpeedTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C303AF912EF1ADC100309FA7 /* Word Search: SpeedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Word Search: SpeedUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C303AF782EF1ADBF00309FA7 /* Word Search Speed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Word Search Speed.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C303AF872EF1ADC100309FA7 /* Word Search SpeedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Word Search SpeedTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C303AF912EF1ADC100309FA7 /* Word Search SpeedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Word Search SpeedUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -85,9 +85,9 @@
 		C303AF792EF1ADBF00309FA7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C303AF782EF1ADBF00309FA7 /* Word Search: Speed.app */,
-				C303AF872EF1ADC100309FA7 /* Word Search: SpeedTests.xctest */,
-				C303AF912EF1ADC100309FA7 /* Word Search: SpeedUITests.xctest */,
+				C303AF782EF1ADBF00309FA7 /* Word Search Speed.app */,
+				C303AF872EF1ADC100309FA7 /* Word Search SpeedTests.xctest */,
+				C303AF912EF1ADC100309FA7 /* Word Search SpeedUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C303AF772EF1ADBF00309FA7 /* Word Search: Speed */ = {
+		C303AF772EF1ADBF00309FA7 /* Word Search Speed */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C303AF9B2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: Speed" */;
+			buildConfigurationList = C303AF9B2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search Speed" */;
 			buildPhases = (
 				C303AF742EF1ADBF00309FA7 /* Sources */,
 				C303AF752EF1ADBF00309FA7 /* Frameworks */,
@@ -110,16 +110,16 @@
 			fileSystemSynchronizedGroups = (
 				C303AF7A2EF1ADBF00309FA7 /* Word Search: Speed */,
 			);
-			name = "Word Search: Speed";
+			name = "Word Search Speed";
 			packageProductDependencies = (
 			);
 			productName = "Word Search: Speed";
-			productReference = C303AF782EF1ADBF00309FA7 /* Word Search: Speed.app */;
+			productReference = C303AF782EF1ADBF00309FA7 /* Word Search Speed.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C303AF862EF1ADC100309FA7 /* Word Search: SpeedTests */ = {
+		C303AF862EF1ADC100309FA7 /* Word Search SpeedTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C303AF9E2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: SpeedTests" */;
+			buildConfigurationList = C303AF9E2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search SpeedTests" */;
 			buildPhases = (
 				C303AF832EF1ADC100309FA7 /* Sources */,
 				C303AF842EF1ADC100309FA7 /* Frameworks */,
@@ -133,16 +133,16 @@
 			fileSystemSynchronizedGroups = (
 				C303AF8A2EF1ADC100309FA7 /* Word Search: SpeedTests */,
 			);
-			name = "Word Search: SpeedTests";
+			name = "Word Search SpeedTests";
 			packageProductDependencies = (
 			);
 			productName = "Word Search: SpeedTests";
-			productReference = C303AF872EF1ADC100309FA7 /* Word Search: SpeedTests.xctest */;
+			productReference = C303AF872EF1ADC100309FA7 /* Word Search SpeedTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C303AF902EF1ADC100309FA7 /* Word Search: SpeedUITests */ = {
+		C303AF902EF1ADC100309FA7 /* Word Search SpeedUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C303AFA12EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: SpeedUITests" */;
+			buildConfigurationList = C303AFA12EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search SpeedUITests" */;
 			buildPhases = (
 				C303AF8D2EF1ADC100309FA7 /* Sources */,
 				C303AF8E2EF1ADC100309FA7 /* Frameworks */,
@@ -156,11 +156,11 @@
 			fileSystemSynchronizedGroups = (
 				C303AF942EF1ADC100309FA7 /* Word Search: SpeedUITests */,
 			);
-			name = "Word Search: SpeedUITests";
+			name = "Word Search SpeedUITests";
 			packageProductDependencies = (
 			);
 			productName = "Word Search: SpeedUITests";
-			productReference = C303AF912EF1ADC100309FA7 /* Word Search: SpeedUITests.xctest */;
+			productReference = C303AF912EF1ADC100309FA7 /* Word Search SpeedUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C303AF732EF1ADBF00309FA7 /* Build configuration list for PBXProject "Word Search: Speed" */;
+			buildConfigurationList = C303AF732EF1ADBF00309FA7 /* Build configuration list for PBXProject "Word Search Speed" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +200,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C303AF772EF1ADBF00309FA7 /* Word Search: Speed */,
-				C303AF862EF1ADC100309FA7 /* Word Search: SpeedTests */,
-				C303AF902EF1ADC100309FA7 /* Word Search: SpeedUITests */,
+				C303AF772EF1ADBF00309FA7 /* Word Search Speed */,
+				C303AF862EF1ADC100309FA7 /* Word Search SpeedTests */,
+				C303AF902EF1ADC100309FA7 /* Word Search SpeedUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		C303AF892EF1ADC100309FA7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C303AF772EF1ADBF00309FA7 /* Word Search: Speed */;
+			target = C303AF772EF1ADBF00309FA7 /* Word Search Speed */;
 			targetProxy = C303AF882EF1ADC100309FA7 /* PBXContainerItemProxy */;
 		};
 		C303AF932EF1ADC100309FA7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C303AF772EF1ADBF00309FA7 /* Word Search: Speed */;
+			target = C303AF772EF1ADBF00309FA7 /* Word Search Speed */;
 			targetProxy = C303AF922EF1ADC100309FA7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -408,7 +408,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
@@ -452,7 +452,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
@@ -494,7 +494,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Word Search: Speed.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Word Search: Speed";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Word Search Speed.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Word Search Speed";
 				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
@@ -520,7 +520,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Word Search: Speed.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Word Search: Speed";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Word Search Speed.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Word Search Speed";
 				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
@@ -578,7 +578,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C303AF732EF1ADBF00309FA7 /* Build configuration list for PBXProject "Word Search: Speed" */ = {
+		C303AF732EF1ADBF00309FA7 /* Build configuration list for PBXProject "Word Search Speed" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C303AF992EF1ADC100309FA7 /* Debug */,
@@ -587,7 +587,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C303AF9B2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: Speed" */ = {
+		C303AF9B2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search Speed" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C303AF9C2EF1ADC100309FA7 /* Debug */,
@@ -596,7 +596,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C303AF9E2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: SpeedTests" */ = {
+		C303AF9E2EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search SpeedTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C303AF9F2EF1ADC100309FA7 /* Debug */,
@@ -605,7 +605,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C303AFA12EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search: SpeedUITests" */ = {
+		C303AFA12EF1ADC100309FA7 /* Build configuration list for PBXNativeTarget "Word Search SpeedUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C303AFA22EF1ADC100309FA7 /* Debug */,
