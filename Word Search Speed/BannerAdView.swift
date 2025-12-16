@@ -18,11 +18,11 @@ struct BannerAdView: View {
     var body: some View {
         #if canImport(GoogleMobileAds)
         BannerWrappedView(adUnitID: adUnitID)
-            .frame(width: 320, height: 50)
+            .frame(width: 160, height: 25)
         #else
         // Placeholder when the ads SDK is unavailable (e.g., Previews/CI)
         Color.clear
-            .frame(width: 320, height: 50)
+            .frame(width: 160, height: 25)
         #endif
     }
 }

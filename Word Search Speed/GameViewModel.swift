@@ -91,7 +91,8 @@ final class GameViewModel: ObservableObject {
         if let saved = defaults.string(forKey: K.selectedDifficulty),
            let d = Self.deserializeDifficulty(saved) {
             difficulty = d
-            newRound()
+            // First game in a session: reset score
+            newRound(resetScore: true)
         } else {
             needsDifficultySelection = true
         }
@@ -102,11 +103,16 @@ final class GameViewModel: ObservableObject {
         difficulty = newDifficulty
         defaults.set(Self.serializeDifficulty(newDifficulty), forKey: K.selectedDifficulty)
         needsDifficultySelection = false
-        newRound()
+        // Changing difficulty starts a new game: reset score
+        newRound(resetScore: true)
     }
 
-    func newRound() {
+    func newRound(resetScore: Bool = false) {
         timer?.invalidate()
+
+        if resetScore {
+            totalScore = 0
+        }
 
         let words = WordBank.pickWords(difficulty: difficulty, rng: &rng)
         puzzle = engine.makePuzzle(
@@ -130,12 +136,16 @@ final class GameViewModel: ObservableObject {
 
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            guard self.phase == .playing else { return }
-            self.timeLeft -= 1
-            if self.timeLeft <= 0 {
-                self.phase = .lost
-                self.timer?.invalidate()
-                // Do NOT finalize score here; user may continue with rewarded.
+            Task { @MainActor in
+                guard self.phase == .playing else { return }
+                self.timeLeft -= 1
+                if self.timeLeft <= 0 {
+                    // Timer ran out: reset cumulative score immediately
+                    self.totalScore = 0
+                    self.phase = .lost
+                    self.timer?.invalidate()
+                    // Do NOT finalize score here; user may continue with rewarded.
+                }
             }
         }
     }
@@ -155,7 +165,9 @@ final class GameViewModel: ObservableObject {
             AdManager.shared.showInterstitialIfReady()
         }
 
-        newRound()
+        // If we are advancing after a loss, that starts a new game: reset score.
+        let shouldReset = (phase == .lost)
+        newRound(resetScore: shouldReset)
     }
 
     // MARK: - Rewarded continue
@@ -167,12 +179,14 @@ final class GameViewModel: ObservableObject {
         AdManager.shared.showRewarded { [weak self] earned in
             guard let self else { return }
             guard earned else { return }
-            // Continue the same puzzle:
-            self.rewardedUsedThisRound = true
-            self.phase = .playing
-            // Give them +10s play window; this does not inflate score (soft penalty applied later)
-            self.timeLeft = 10
-            self.startTimerAgain()
+            Task { @MainActor in
+                // Continue the same puzzle:
+                self.rewardedUsedThisRound = true
+                self.phase = .playing
+                // Give them +10s play window; this does not inflate score (soft penalty applied later)
+                self.timeLeft = 10
+                self.startTimerAgain()
+            }
         }
     }
 
@@ -180,12 +194,16 @@ final class GameViewModel: ObservableObject {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            guard self.phase == .playing else { return }
-            self.timeLeft -= 1
-            if self.timeLeft <= 0 {
-                self.phase = .lost
-                self.timer?.invalidate()
-                // Still do not finalize here; allow user to choose next or continue.
+            Task { @MainActor in
+                guard self.phase == .playing else { return }
+                self.timeLeft -= 1
+                if self.timeLeft <= 0 {
+                    // Timer ran out again: reset cumulative score immediately
+                    self.totalScore = 0
+                    self.phase = .lost
+                    self.timer?.invalidate()
+                    // Still do not finalize here; allow user to choose next or continue.
+                }
             }
         }
     }
@@ -350,4 +368,3 @@ final class GameViewModel: ObservableObject {
         }
     }
 }
-
