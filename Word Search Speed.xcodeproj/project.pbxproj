@@ -30,19 +30,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C303AF7A2EF1ADBF00309FA7 /* Word Search: Speed */ = {
+		C303AF7A2EF1ADBF00309FA7 /* Word Search Speed */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Word Search: Speed";
+			path = "Word Search Speed";
 			sourceTree = "<group>";
 		};
-		C303AF8A2EF1ADC100309FA7 /* Word Search: SpeedTests */ = {
+		C303AF8A2EF1ADC100309FA7 /* Word Search SpeedTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Word Search: SpeedTests";
+			path = "Word Search SpeedTests";
 			sourceTree = "<group>";
 		};
-		C303AF942EF1ADC100309FA7 /* Word Search: SpeedUITests */ = {
+		C303AF942EF1ADC100309FA7 /* Word Search SpeedUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Word Search: SpeedUITests";
+			path = "Word Search SpeedUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,9 +75,9 @@
 		C303AF6F2EF1ADBF00309FA7 = {
 			isa = PBXGroup;
 			children = (
-				C303AF7A2EF1ADBF00309FA7 /* Word Search: Speed */,
-				C303AF8A2EF1ADC100309FA7 /* Word Search: SpeedTests */,
-				C303AF942EF1ADC100309FA7 /* Word Search: SpeedUITests */,
+				C303AF7A2EF1ADBF00309FA7 /* Word Search Speed */,
+				C303AF8A2EF1ADC100309FA7 /* Word Search SpeedTests */,
+				C303AF942EF1ADC100309FA7 /* Word Search SpeedUITests */,
 				C303AF792EF1ADBF00309FA7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,7 +108,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C303AF7A2EF1ADBF00309FA7 /* Word Search: Speed */,
+				C303AF7A2EF1ADBF00309FA7 /* Word Search Speed */,
 			);
 			name = "Word Search Speed";
 			packageProductDependencies = (
@@ -131,7 +131,7 @@
 				C303AF892EF1ADC100309FA7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C303AF8A2EF1ADC100309FA7 /* Word Search: SpeedTests */,
+				C303AF8A2EF1ADC100309FA7 /* Word Search SpeedTests */,
 			);
 			name = "Word Search SpeedTests";
 			packageProductDependencies = (
@@ -154,7 +154,7 @@
 				C303AF932EF1ADC100309FA7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C303AF942EF1ADC100309FA7 /* Word Search: SpeedUITests */,
+				C303AF942EF1ADC100309FA7 /* Word Search SpeedUITests */,
 			);
 			name = "Word Search SpeedUITests";
 			packageProductDependencies = (

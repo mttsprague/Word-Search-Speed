@@ -25,7 +25,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
     ) -> Bool {
+        #if canImport(GoogleMobileAds)
         GADMobileAds.sharedInstance().start(completionHandler: nil)
+        #endif
         return true
     }
 }

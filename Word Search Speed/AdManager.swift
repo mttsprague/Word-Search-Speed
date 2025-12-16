@@ -6,8 +6,11 @@
 //
 
 import Foundation
-import GoogleMobileAds
 import UIKit
+
+#if canImport(GoogleMobileAds)
+import GoogleMobileAds
+#endif
 
 @MainActor
 final class AdManager: ObservableObject {
@@ -16,8 +19,13 @@ final class AdManager: ObservableObject {
     @Published private(set) var isInterstitialReady = false
     @Published private(set) var isRewardedReady = false
 
+    #if canImport(GoogleMobileAds)
     private var interstitial: GADInterstitialAd?
     private var rewarded: GADRewardedAd?
+    #else
+    private var interstitial: Any?
+    private var rewarded: Any?
+    #endif
 
     private init() {}
 
@@ -27,28 +35,33 @@ final class AdManager: ObservableObject {
     }
 
     func loadInterstitial() {
+        #if canImport(GoogleMobileAds)
         isInterstitialReady = false
         interstitial = nil
 
         let request = GADRequest()
-        GADInterstitialAd.load(withAdUnitID: AdUnits.interstitial, request: request) { [weak self] ad, error in
+        GADInterstitialAd.load(withAdUnitID: AdUnits.interstitial, request: request) { [weak self] ad, _ in
             guard let self else { return }
             if let ad = ad {
                 self.interstitial = ad
                 self.isInterstitialReady = true
             } else {
                 self.isInterstitialReady = false
-                // You can log error?.localizedDescription if you want.
             }
         }
+        #else
+        isInterstitialReady = false
+        interstitial = nil
+        #endif
     }
 
     func loadRewarded() {
+        #if canImport(GoogleMobileAds)
         isRewardedReady = false
         rewarded = nil
 
         let request = GADRequest()
-        GADRewardedAd.load(withAdUnitID: AdUnits.rewarded, request: request) { [weak self] ad, error in
+        GADRewardedAd.load(withAdUnitID: AdUnits.rewarded, request: request) { [weak self] ad, _ in
             guard let self else { return }
             if let ad = ad {
                 self.rewarded = ad
@@ -57,10 +70,15 @@ final class AdManager: ObservableObject {
                 self.isRewardedReady = false
             }
         }
+        #else
+        isRewardedReady = false
+        rewarded = nil
+        #endif
     }
 
     func showInterstitialIfReady() {
-        guard let ad = interstitial, isInterstitialReady else { return }
+        #if canImport(GoogleMobileAds)
+        guard let ad = interstitial as? GADInterstitialAd, isInterstitialReady else { return }
         guard let vc = UIApplication.shared.topViewController() else { return }
 
         isInterstitialReady = false
@@ -68,11 +86,15 @@ final class AdManager: ObservableObject {
 
         ad.present(fromRootViewController: vc)
         loadInterstitial()
+        #else
+        // No-op when GoogleMobileAds is unavailable
+        #endif
     }
 
     /// Presents rewarded and calls completion(true) if the user earned the reward.
     func showRewarded(completion: @escaping (Bool) -> Void) {
-        guard let ad = rewarded, isRewardedReady else {
+        #if canImport(GoogleMobileAds)
+        guard let ad = rewarded as? GADRewardedAd, isRewardedReady else {
             completion(false)
             return
         }
@@ -89,6 +111,9 @@ final class AdManager: ObservableObject {
         }
 
         loadRewarded()
+        #else
+        completion(false)
+        #endif
     }
 }
 
