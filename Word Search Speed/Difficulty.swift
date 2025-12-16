@@ -26,13 +26,8 @@ enum Difficulty: CaseIterable, Hashable {
         }
     }
 
-    var wordCount: Int {
-        switch self {
-        case .easy: return 3
-        case .medium: return 2
-        case .hard: return 1
-        }
-    }
+    // Use 3 words for all difficulties
+    var wordCount: Int { 3 }
 
     var seconds: Int { 30 }
 
@@ -64,3 +59,4 @@ enum Difficulty: CaseIterable, Hashable {
         }
     }
 }
+

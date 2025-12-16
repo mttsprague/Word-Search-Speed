@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import Combine
 
 #if canImport(GoogleMobileAds)
 import GoogleMobileAds
@@ -20,8 +21,8 @@ final class AdManager: ObservableObject {
     @Published private(set) var isRewardedReady = false
 
     #if canImport(GoogleMobileAds)
-    private var interstitial: GADInterstitialAd?
-    private var rewarded: GADRewardedAd?
+    private var interstitial: InterstitialAd?
+    private var rewarded: RewardedAd?
     #else
     private var interstitial: Any?
     private var rewarded: Any?
@@ -39,14 +40,16 @@ final class AdManager: ObservableObject {
         isInterstitialReady = false
         interstitial = nil
 
-        let request = GADRequest()
-        GADInterstitialAd.load(withAdUnitID: AdUnits.interstitial, request: request) { [weak self] ad, _ in
-            guard let self else { return }
-            if let ad = ad {
-                self.interstitial = ad
-                self.isInterstitialReady = true
-            } else {
-                self.isInterstitialReady = false
+        let request = Request()
+        InterstitialAd.load(with: AdUnits.interstitial, request: request) { [weak self] ad, _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let ad = ad {
+                    self.interstitial = ad
+                    self.isInterstitialReady = true
+                } else {
+                    self.isInterstitialReady = false
+                }
             }
         }
         #else
@@ -60,14 +63,16 @@ final class AdManager: ObservableObject {
         isRewardedReady = false
         rewarded = nil
 
-        let request = GADRequest()
-        GADRewardedAd.load(withAdUnitID: AdUnits.rewarded, request: request) { [weak self] ad, _ in
-            guard let self else { return }
-            if let ad = ad {
-                self.rewarded = ad
-                self.isRewardedReady = true
-            } else {
-                self.isRewardedReady = false
+        let request = Request()
+        RewardedAd.load(with: AdUnits.rewarded, request: request) { [weak self] ad, _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let ad = ad {
+                    self.rewarded = ad
+                    self.isRewardedReady = true
+                } else {
+                    self.isRewardedReady = false
+                }
             }
         }
         #else
@@ -78,13 +83,13 @@ final class AdManager: ObservableObject {
 
     func showInterstitialIfReady() {
         #if canImport(GoogleMobileAds)
-        guard let ad = interstitial as? GADInterstitialAd, isInterstitialReady else { return }
+        guard let ad = interstitial, isInterstitialReady else { return }
         guard let vc = UIApplication.shared.topViewController() else { return }
 
         isInterstitialReady = false
         interstitial = nil
 
-        ad.present(fromRootViewController: vc)
+        ad.present(from: vc)
         loadInterstitial()
         #else
         // No-op when GoogleMobileAds is unavailable
@@ -94,7 +99,7 @@ final class AdManager: ObservableObject {
     /// Presents rewarded and calls completion(true) if the user earned the reward.
     func showRewarded(completion: @escaping (Bool) -> Void) {
         #if canImport(GoogleMobileAds)
-        guard let ad = rewarded as? GADRewardedAd, isRewardedReady else {
+        guard let ad = rewarded, isRewardedReady else {
             completion(false)
             return
         }
@@ -106,7 +111,7 @@ final class AdManager: ObservableObject {
         isRewardedReady = false
         rewarded = nil
 
-        ad.present(fromRootViewController: vc) {
+        ad.present(from: vc) {
             completion(true)
         }
 
@@ -116,4 +121,3 @@ final class AdManager: ObservableObject {
         #endif
     }
 }
-

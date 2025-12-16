@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@main
 struct Word_Search_SpeedApp: App {
     var body: some Scene {
         WindowGroup {

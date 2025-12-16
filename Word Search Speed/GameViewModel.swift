@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @MainActor
 final class GameViewModel: ObservableObject {
@@ -19,7 +20,35 @@ final class GameViewModel: ObservableObject {
     @Published var roundsCompleted: Int = 0
     @Published var rewardedUsedThisRound: Bool = false
 
+    // Score
+    @Published var totalScore: Int = 0
+    @Published var lastRoundScore: Int = 0
+    @Published var lastRoundBreakdown: ScoreBreakdown = .empty
+
+    // Difficulty selection sheet control
+    @Published var needsDifficultySelection: Bool = false
+
     enum Phase { case playing, won, lost }
+
+    struct ScoreBreakdown: Equatable {
+        let wordsFound: Int
+        let wordPoints: Int
+        let timeLeftUsedForScoring: Int
+        let difficultyMultiplier: Int
+        let timeBonus: Int
+        let rewardedPenaltyApplied: Bool
+
+        var roundScore: Int { wordPoints + timeBonus }
+
+        static let empty = ScoreBreakdown(
+            wordsFound: 0,
+            wordPoints: 0,
+            timeLeftUsedForScoring: 0,
+            difficultyMultiplier: 1,
+            timeBonus: 0,
+            rewardedPenaltyApplied: false
+        )
+    }
 
     private let engine = PuzzleEngine()
     private var timer: Timer?
@@ -30,8 +59,49 @@ final class GameViewModel: ObservableObject {
     private var roundStartTime: Date?
     private let stats = StatsStore.shared
 
+    // Prevents resetting the round when the view reappears (e.g., after a full-screen ad).
+    private var didStart = false
+
+    private let defaults = UserDefaults.standard
+    private enum K {
+        static let selectedDifficulty = "selectedDifficulty"
+    }
+
+    // Prevent double score finalization for a round
+    private var scoreFinalizedForCurrentRound = false
+
+    // Scoring constants
+    private let basePerWord = 100
+    private func multiplier(for difficulty: Difficulty) -> Int {
+        switch difficulty {
+        case .easy: return 1
+        case .medium: return 2
+        case .hard: return 3
+        }
+    }
+
     func start() {
+        // Make this idempotent so .onAppear doesn’t start a new round again after ads.
+        guard didStart == false else { return }
+        didStart = true
+
         AdManager.shared.preloadAll()
+
+        // Load persisted difficulty if available. If not, prompt selection.
+        if let saved = defaults.string(forKey: K.selectedDifficulty),
+           let d = Self.deserializeDifficulty(saved) {
+            difficulty = d
+            newRound()
+        } else {
+            needsDifficultySelection = true
+        }
+    }
+
+    // Call when the user picks a difficulty in the sheet.
+    func applyDifficulty(_ newDifficulty: Difficulty) {
+        difficulty = newDifficulty
+        defaults.set(Self.serializeDifficulty(newDifficulty), forKey: K.selectedDifficulty)
+        needsDifficultySelection = false
         newRound()
     }
 
@@ -52,6 +122,9 @@ final class GameViewModel: ObservableObject {
         dragStart = nil
         rewardedUsedThisRound = false
         roundStartTime = Date()
+        scoreFinalizedForCurrentRound = false
+        lastRoundScore = 0
+        lastRoundBreakdown = .empty
 
         stats.recordGamePlayed()
 
@@ -62,6 +135,7 @@ final class GameViewModel: ObservableObject {
             if self.timeLeft <= 0 {
                 self.phase = .lost
                 self.timer?.invalidate()
+                // Do NOT finalize score here; user may continue with rewarded.
             }
         }
     }
@@ -69,6 +143,11 @@ final class GameViewModel: ObservableObject {
     // MARK: - Round transitions + Interstitial pacing
 
     func nextPuzzleTapped() {
+        // If the round ended in a loss and the user did not continue, finalize score now.
+        if phase == .lost && scoreFinalizedForCurrentRound == false {
+            finalizeRoundScore()
+        }
+
         roundsCompleted += 1
 
         // Interstitial every 3 rounds, between puzzles only
@@ -91,7 +170,8 @@ final class GameViewModel: ObservableObject {
             // Continue the same puzzle:
             self.rewardedUsedThisRound = true
             self.phase = .playing
-            self.timeLeft = 10 // give them a small window; tweak if you want
+            // Give them +10s play window; this does not inflate score (soft penalty applied later)
+            self.timeLeft = 10
             self.startTimerAgain()
         }
     }
@@ -105,6 +185,7 @@ final class GameViewModel: ObservableObject {
             if self.timeLeft <= 0 {
                 self.phase = .lost
                 self.timer?.invalidate()
+                // Still do not finalize here; allow user to choose next or continue.
             }
         }
     }
@@ -166,6 +247,9 @@ final class GameViewModel: ObservableObject {
                 let solveSeconds = max(0, Int(Date().timeIntervalSince(start)))
                 stats.recordWin(solveSeconds: solveSeconds)
             }
+
+            // Finalize score immediately on win
+            finalizeRoundScore()
         }
     }
 
@@ -215,4 +299,55 @@ final class GameViewModel: ObservableObject {
     func isFoundCell(_ p: GridPoint) -> Bool {
         puzzle.words.contains(where: { $0.found && $0.path.contains(p) })
     }
+
+    // MARK: - Scoring
+
+    private func finalizeRoundScore() {
+        guard scoreFinalizedForCurrentRound == false else { return }
+        scoreFinalizedForCurrentRound = true
+
+        let wordsFound = puzzle.words.filter { $0.found }.count
+        let wordPoints = wordsFound * basePerWord
+
+        // Soft penalty: if rewarded was used, subtract 10s from time used for scoring (never below 0)
+        let timeLeftForScoring = max(0, timeLeft - (rewardedUsedThisRound ? 10 : 0))
+        let mult = multiplier(for: difficulty)
+        let timeBonus = timeLeftForScoring * mult
+
+        let breakdown = ScoreBreakdown(
+            wordsFound: wordsFound,
+            wordPoints: wordPoints,
+            timeLeftUsedForScoring: timeLeftForScoring,
+            difficultyMultiplier: mult,
+            timeBonus: timeBonus,
+            rewardedPenaltyApplied: rewardedUsedThisRound
+        )
+
+        lastRoundBreakdown = breakdown
+        lastRoundScore = breakdown.roundScore
+        totalScore += breakdown.roundScore
+
+        // Submit to Game Center
+        GameCenterManager.shared.submit(score: breakdown.roundScore)
+    }
+
+    // MARK: - Persistence helpers
+
+    private static func serializeDifficulty(_ d: Difficulty) -> String {
+        switch d {
+        case .easy: return "easy"
+        case .medium: return "medium"
+        case .hard: return "hard"
+        }
+    }
+
+    private static func deserializeDifficulty(_ s: String) -> Difficulty? {
+        switch s {
+        case "easy": return .easy
+        case "medium": return .medium
+        case "hard": return .hard
+        default: return nil
+        }
+    }
 }
+

@@ -31,17 +31,20 @@ struct BannerAdView: View {
 private struct BannerWrappedView: UIViewRepresentable {
     let adUnitID: String
 
-    func makeUIView(context: Context) -> GADBannerView {
-        let view = GADBannerView(adSize: GADAdSizeBanner)
+    func makeUIView(context: Context) -> BannerView {
+        let view = BannerView(adSize: AdSizeBanner)
         view.adUnitID = adUnitID
-        view.rootViewController = UIApplication.shared.topViewController()
-        view.load(GADRequest())
+        if let top = UIApplication.shared.topViewController() {
+            view.rootViewController = top
+        }
+        view.load(Request())
         return view
     }
 
-    func updateUIView(_ uiView: GADBannerView, context: Context) {
-        uiView.rootViewController = UIApplication.shared.topViewController()
+    func updateUIView(_ uiView: BannerView, context: Context) {
+        if let top = UIApplication.shared.topViewController() {
+            uiView.rootViewController = top
+        }
     }
 }
 #endif
-
