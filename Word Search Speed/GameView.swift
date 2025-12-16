@@ -261,23 +261,27 @@ struct GameView: View {
     }
 
     private var wordChips: some View {
-        HStack(alignment: .center, spacing: 8) {
-            Spacer(minLength: 0)
-
+        VStack(alignment: .center, spacing: 8) {
             Text("Find:")
                 .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .center)
 
-            ForEach(vm.puzzle.words) { w in
-                Text(w.word)
-                    .strikethrough(w.found)
-                    .opacity(w.found ? 0.4 : 1.0)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.12))
-                    .clipShape(Capsule())
+            // Adaptive grid that wraps chips to new centered lines
+            let columns = [GridItem(.adaptive(minimum: 80), spacing: 8, alignment: .center)]
+            LazyVGrid(columns: columns, alignment: .center, spacing: 8) {
+                ForEach(vm.puzzle.words) { w in
+                    Text(w.word)
+                        .strikethrough(w.found)
+                        .opacity(w.found ? 0.4 : 1.0)
+                        .lineLimit(1) // don’t break/hyphenate within a chip
+                        .minimumScaleFactor(0.9)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.12))
+                        .clipShape(Capsule())
+                }
             }
-
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal)
     }
