@@ -260,28 +260,39 @@ struct GameView: View {
         return GridPoint(r: r, c: c)
     }
 
+    private func chip(for w: PlacedWord) -> some View {
+        Text(w.word)
+            .strikethrough(w.found)
+            .opacity(w.found ? 0.4 : 1.0)
+            .multilineTextAlignment(.center)
+            .lineLimit(nil) // allow wrapping to avoid truncation
+            .fixedSize(horizontal: false, vertical: true) // grow vertically if needed
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.gray.opacity(0.12))
+            .clipShape(Capsule())
+    }
+
+    // Layout: first line shows "Find:" + first word; second line shows the remaining two words, centered.
     private var wordChips: some View {
         VStack(alignment: .center, spacing: 8) {
-            Text("Find:")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-            // Adaptive grid that wraps chips to new centered lines
-            let columns = [GridItem(.adaptive(minimum: 80), spacing: 8, alignment: .center)]
-            LazyVGrid(columns: columns, alignment: .center, spacing: 8) {
-                ForEach(vm.puzzle.words) { w in
-                    Text(w.word)
-                        .strikethrough(w.found)
-                        .opacity(w.found ? 0.4 : 1.0)
-                        .lineLimit(1) // don’t break/hyphenate within a chip
-                        .minimumScaleFactor(0.9)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.gray.opacity(0.12))
-                        .clipShape(Capsule())
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                Text("Find:")
+                    .font(.headline)
+                if let first = vm.puzzle.words.first {
+                    chip(for: first)
                 }
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                ForEach(Array(vm.puzzle.words.dropFirst())) { w in
+                    chip(for: w)
+                }
+                Spacer(minLength: 0)
+            }
         }
         .padding(.horizontal)
     }
