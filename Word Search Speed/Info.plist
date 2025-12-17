@@ -21,9 +21,9 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 
-	<!-- Google Mobile Ads App ID (test ID) -->
+	<!-- Google Mobile Ads App ID (PRODUCTION) -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-5557210430607427~5632144125</string>
 
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

@@ -8,10 +8,8 @@
 import Foundation
 
 enum AdUnits {
-    // Replace with your real IDs later.
-    // Test IDs are safe for development.
-    static let banner = "ca-app-pub-3940256099942544/2435281174"
-    static let interstitial = "ca-app-pub-3940256099942544/4411468910"
-    static let rewarded = "ca-app-pub-3940256099942544/1712485313"
+    // Live production units
+    static let banner = "ca-app-pub-5557210430607427/7108059083"
+    static let interstitial = "ca-app-pub-5557210430607427/5356811950"
+    static let rewarded = "ca-app-pub-5557210430607427/5583402037"
 }
-

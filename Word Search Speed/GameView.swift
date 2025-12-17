@@ -29,27 +29,74 @@ struct GameView: View {
     @State private var localWeeklyRankText: String = "Chase the trophy"
 
     var body: some View {
-        VStack(spacing: 12) {
-            header
+        ZStack {
+            AnimatedBackdrop()
+                .ignoresSafeArea()
 
-            ZStack {
-                grid
-                    .aspectRatio(1, contentMode: .fit)
+            VStack(spacing: 16) {
+                header
+
+                ZStack {
+                    // Board container with glass effect
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
+                        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 14)
+                        .padding(.horizontal)
+
+                    // Reserve explicit space for the difficulty badge, then place grid
+                    VStack(spacing: 0) {
+                        // Adjust this height to taste if you want the grid even lower
+                        Spacer().frame(height: 72)
+
+                        grid
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 14)
+                    }
                     .padding(.horizontal)
+                }
+                .overlay(alignment: .topTrailing) {
+                    // Difficulty badge on board
+                    HStack(spacing: 6) {
+                        Image(systemName: "dial.medium.fill")
+                        Text(vm.difficulty.title)
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(LinearGradient(colors: [.purple.opacity(0.9), .blue.opacity(0.9)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+                    .padding(.trailing, 24)
+                    .padding(.top, 8)
+                    .opacity(vm.phase == .playing ? 1 : 0.8)
+                }
 
+                wordChips
+
+                // Banner at bottom (stable impressions)
+                BannerAdView(adUnitID: AdUnits.banner)
+                    .frame(width: 160, height: 25)
+                    .padding(.top, 6)
+                    .opacity(0.9)
+            }
+            .padding(.vertical)
+            .overlay {
                 if vm.phase != .playing {
                     resultOverlay
+                        .transition(.scale.combined(with: .opacity))
                 }
             }
-
-            wordChips
-
-            // Banner at bottom (stable impressions)
-            BannerAdView(adUnitID: AdUnits.banner)
-                .frame(width: 160, height: 25)
-                .padding(.top, 6)
         }
-        .padding(.vertical)
         .onAppear {
             vm.start()
             // Present difficulty selection if needed on first launch.
@@ -85,15 +132,18 @@ struct GameView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             // Small leaderboard buttons ABOVE the stats row
-            HStack(alignment: .center, spacing: 8) {
+            HStack(alignment: .center, spacing: 10) {
                 LeaderboardCard(
                     titleTop: "Top 15",
                     titleBottom: "Today",
                     subtitle: localDailyRankText,
                     systemImage: "bolt.fill",
-                    gradient: Gradient(colors: [Color(#colorLiteral(red: 1, green: 0.552, blue: 0.224, alpha: 1)), Color(#colorLiteral(red: 1, green: 0.224, blue: 0.361, alpha: 1))]),
+                    gradient: Gradient(colors: [
+                        Color(#colorLiteral(red: 1, green: 0.552, blue: 0.224, alpha: 1)),
+                        Color(#colorLiteral(red: 1, green: 0.224, blue: 0.361, alpha: 1))
+                    ]),
                     glowColor: Color.orange.opacity(0.6)
                 ) {
                     showingDailyTop = true
@@ -105,37 +155,62 @@ struct GameView: View {
                     titleBottom: "This Week",
                     subtitle: localWeeklyRankText,
                     systemImage: "trophy.fill",
-                    gradient: Gradient(colors: [Color(#colorLiteral(red: 0.27, green: 0.62, blue: 1, alpha: 1)), Color(#colorLiteral(red: 0.36, green: 0.2, blue: 0.93, alpha: 1))]),
+                    gradient: Gradient(colors: [
+                        Color(#colorLiteral(red: 0.27, green: 0.62, blue: 1, alpha: 1)),
+                        Color(#colorLiteral(red: 0.36, green: 0.2, blue: 0.93, alpha: 1))
+                    ]),
                     glowColor: Color.blue.opacity(0.6)
                 ) {
                     showingWeeklyTop = true
                     loadWeeklyTop15AndLocal()
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .center) // let content control height
+            .frame(maxWidth: .infinity, alignment: .center)
             .padding(.horizontal)
 
             // Stats row directly above the puzzle
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Time: \(vm.timeLeft)")
-                        .font(.headline)
-                    Text("Score: \(vm.totalScore)")
-                        .font(.headline)
-                    Text("Streak: \(StatsStore.shared.streak)  •  Best: \(StatsStore.shared.bestSolveSeconds.map(String.init) ?? "-")s")
-                        .font(.caption)
-                        .opacity(0.8)
+            HStack(spacing: 10) {
+                StatBadge(
+                    title: "Time",
+                    value: "\(vm.timeLeft)",
+                    icon: "timer",
+                    gradient: [.mint, .teal]
+                )
+
+                StatBadge(
+                    title: "Score",
+                    value: "\(vm.totalScore)",
+                    icon: "star.fill",
+                    gradient: [.yellow, .orange]
+                )
+
+                StatBadge(
+                    title: "Streak",
+                    value: "\(StatsStore.shared.streak)",
+                    icon: "flame.fill",
+                    gradient: [.pink, .red]
+                )
+
+                Spacer(minLength: 0)
+
+                // Best time mini badge
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.badge.checkmark")
+                    Text(StatsStore.shared.bestSolveSeconds.map { "\($0)s" } ?? "-")
                 }
-
-                Spacer()
-
-                // Selected difficulty capsule
-                Text(vm.difficulty.title)
-                    .font(.headline)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.12))
-                    .clipShape(Capsule())
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+                .opacity(0.9)
             }
             .padding(.horizontal)
         }
@@ -207,6 +282,14 @@ struct GameView: View {
             let cell = side / CGFloat(max(size, 1))
 
             ZStack(alignment: .topLeading) {
+                // Subtle board backdrop grid
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)],
+                                       startPoint: .topLeading,
+                                       endPoint: .bottomTrailing)
+                    )
+
                 ForEach(0..<size, id: \.self) { r in
                     ForEach(0..<size, id: \.self) { c in
                         let p = GridPoint(r: r, c: c)
@@ -238,18 +321,35 @@ struct GameView: View {
     }
 
     private func cellView(char: Character, isFound: Bool, isSelected: Bool) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isFound ? Color.green.opacity(0.35)
-                      : isSelected ? Color.blue.opacity(0.25)
-                      : Color.gray.opacity(0.12))
+        let base = RoundedRectangle(cornerRadius: 8, style: .continuous)
+
+        return ZStack {
+            base
+                .fill(
+                    isFound
+                    ? LinearGradient(colors: [Color.green.opacity(0.45), Color.teal.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    : isSelected
+                    ? LinearGradient(colors: [Color.blue.opacity(0.45), Color.indigo.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    : LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                )
+                .overlay(
+                    base.stroke(Color.white.opacity(isSelected || isFound ? 0.35 : 0.15), lineWidth: 1)
+                )
+                .shadow(color: (isSelected ? Color.blue : isFound ? Color.green : Color.black).opacity(isSelected || isFound ? 0.25 : 0.12),
+                        radius: isSelected || isFound ? 6 : 3, x: 0, y: 2)
 
             Text(String(char))
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.system(size: 18, weight: .heavy, design: .rounded))
+                .foregroundStyle(
+                    isFound ? Color.white.opacity(0.95) :
+                    isSelected ? Color.white.opacity(0.95) :
+                    Color.white.opacity(0.9)
+                )
+                .shadow(color: Color.black.opacity(0.25), radius: 1, x: 0, y: 1)
         }
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 0.5)
         )
     }
 
@@ -264,102 +364,159 @@ struct GameView: View {
         WordChipView(word: w.word, found: w.found)
     }
 
-    // Layout: first line shows "Find:" + first word; second line shows the remaining two words, centered.
+    // Layout: line 1 = "Find"; line 2 = first word; line 3 = remaining two words. All centered.
     private var wordChips: some View {
-        VStack(alignment: .center, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .center, spacing: 10) {
+            // Line 1: "Find"
+            HStack {
                 Spacer(minLength: 0)
-                Text("Find:")
-                    .font(.headline)
-                if let first = vm.puzzle.words.first {
-                    chip(for: first)
-                }
+                Text("Find")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(LinearGradient(colors: [.white.opacity(0.25), .white.opacity(0.1)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                    )
+                    .overlay(
+                        Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
                 Spacer(minLength: 0)
             }
 
-            HStack(spacing: 8) {
-                Spacer(minLength: 0)
-                ForEach(Array(vm.puzzle.words.dropFirst())) { w in
-                    chip(for: w)
+            // Line 2: first word (if any)
+            if let first = vm.puzzle.words.first {
+                HStack {
+                    Spacer(minLength: 0)
+                    chip(for: first)
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+            }
+
+            // Line 3: remaining two words (if any), centered
+            let remaining = Array(vm.puzzle.words.dropFirst())
+            if !remaining.isEmpty {
+                HStack(spacing: 10) {
+                    Spacer(minLength: 0)
+                    ForEach(remaining) { w in
+                        chip(for: w)
+                    }
+                    Spacer(minLength: 0)
+                }
             }
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal)
     }
 
     private var resultOverlay: some View {
-        VStack(spacing: 10) {
-            Text(vm.phase == .won ? "You got them!" : "Time’s up!")
-                .font(.title2).bold()
-
-            // Score breakdown
-            if vm.lastRoundScore > 0 || vm.phase == .lost {
-                VStack(spacing: 4) {
-                    let b = vm.lastRoundBreakdown
-                    Text("Round Score: \(vm.lastRoundScore)")
-                        .font(.headline)
-                    if b != .empty {
-                        Text("Words: \(b.wordsFound) × 100 = \(b.wordPoints)")
-                            .font(.caption)
-                            .opacity(0.8)
-                        Text("Time bonus: \(b.timeLeftUsedForScoring) × \(b.difficultyMultiplier) = \(b.timeBonus)\(b.rewardedPenaltyApplied ? " (−10s ad penalty)" : "")")
-                            .font(.caption)
-                            .opacity(0.8)
-                    } else {
-                        Text("Score will finalize when you proceed.")
-                            .font(.caption)
-                            .opacity(0.8)
-                    }
-                }
-                .padding(.top, 4)
+        VStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
             }
-
-            if vm.phase == .lost {
-                Button {
-                    vm.continueWithRewarded()
-                } label: {
+            .overlay(
+                VStack(spacing: 10) {
                     HStack(spacing: 8) {
-                        Text("Continue +10s")
-                        Text(ads.isRewardedReady ? "" : "(Loading...)").opacity(0.7)
+                        Image(systemName: vm.phase == .won ? "checkmark.seal.fill" : "hourglass")
+                            .foregroundStyle(vm.phase == .won ? .green : .orange)
+                        Text(vm.phase == .won ? "You got them!" : "Time’s up!")
                     }
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .padding(.bottom, 2)
+
+                    // Score breakdown
+                    if vm.lastRoundScore > 0 || vm.phase == .lost {
+                        VStack(spacing: 4) {
+                            let b = vm.lastRoundBreakdown
+                            Text("Round Score: \(vm.lastRoundScore)")
+                                .font(.headline)
+                            if b != .empty {
+                                Text("Words: \(b.wordsFound) × 100 = \(b.wordPoints)")
+                                    .font(.caption)
+                                    .opacity(0.85)
+                                Text("Time bonus: \(b.timeLeftUsedForScoring) × \(b.difficultyMultiplier) = \(b.timeBonus)\(b.rewardedPenaltyApplied ? " (−10s ad penalty)" : "")")
+                                    .font(.caption)
+                                    .opacity(0.85)
+                            } else {
+                                Text("Score will finalize when you proceed.")
+                                    .font(.caption)
+                                    .opacity(0.8)
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
+
+                    if vm.phase == .lost {
+                        Button {
+                            vm.continueWithRewarded()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "play.circle.fill")
+                                Text("Continue +10s")
+                                Text(ads.isRewardedReady ? "" : "(Loading...)").opacity(0.7)
+                            }
+                        }
+                        .buttonStyle(SlimBorderedButtonStyle())
+                        .disabled(!ads.isRewardedReady || vm.rewardedUsedThisRound)
+                    }
+
+                    Button {
+                        vm.nextPuzzleTapped()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.right.circle.fill")
+                            Text("Next Puzzle")
+                        }
+                    }
+                    .buttonStyle(SlimProminentButtonStyle())
+
+                    HStack(spacing: 10) {
+                        Button {
+                            GameCenterManager.shared.showDailyLeaderboard()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "bolt.fill")
+                                Text("Daily Leaderboard")
+                            }
+                        }
+                        .buttonStyle(SlimBorderedButtonStyle())
+
+                        Button {
+                            GameCenterManager.shared.showWeeklyLeaderboard()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trophy.fill")
+                                Text("Weekly Leaderboard")
+                            }
+                        }
+                        .buttonStyle(SlimBorderedButtonStyle())
+                    }
+
+                    Button {
+                        // Only allow changing between rounds: present the sheet here.
+                        showDifficultySheet = true
+                        vm.needsDifficultySelection = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "dial.medium.fill")
+                            Text("Change Difficulty")
+                        }
+                    }
+                    .buttonStyle(SlimBorderedButtonStyle())
+
+                    Text("Interstitial: \(ads.isInterstitialReady ? "Ready" : "…")  •  Rewarded: \(ads.isRewardedReady ? "Ready" : "…")")
+                        .font(.caption2)
+                        .opacity(0.6)
                 }
-                .buttonStyle(SlimBorderedButtonStyle())
-                .disabled(!ads.isRewardedReady || vm.rewardedUsedThisRound)
-            }
-
-            Button("Next Puzzle") {
-                vm.nextPuzzleTapped()
-            }
-            .buttonStyle(SlimProminentButtonStyle())
-
-            HStack(spacing: 10) {
-                Button("Daily Leaderboard") {
-                    GameCenterManager.shared.showDailyLeaderboard()
-                }
-                .buttonStyle(SlimBorderedButtonStyle())
-
-                Button("Weekly Leaderboard") {
-                    GameCenterManager.shared.showWeeklyLeaderboard()
-                }
-                .buttonStyle(SlimBorderedButtonStyle())
-            }
-
-            Button("Change Difficulty") {
-                // Only allow changing between rounds: present the sheet here.
-                showDifficultySheet = true
-                vm.needsDifficultySelection = true
-            }
-            .buttonStyle(SlimBorderedButtonStyle())
-
-            Text("Interstitial: \(ads.isInterstitialReady ? "Ready" : "…")  •  Rewarded: \(ads.isRewardedReady ? "Ready" : "…")")
-                .font(.caption2)
-                .opacity(0.6)
+                .padding(16)
+            )
+            .padding(.horizontal)
         }
-        .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 }
 
@@ -554,27 +711,40 @@ private struct WordChipView: View {
     let found: Bool
 
     var body: some View {
-        // Build text first with basic styling
-        let text = Text(word)
-            .strikethrough(found)
-            .opacity(found ? 0.4 : 1.0)
-            .multilineTextAlignment(.center)
-            .lineLimit(nil) // allow wrapping to avoid truncation
-            .allowsTightening(false)
-            .fixedSize(horizontal: false, vertical: true)
+        let gradient = found
+        ? LinearGradient(colors: [Color.gray.opacity(0.35), Color.gray.opacity(0.25)],
+                         startPoint: .topLeading, endPoint: .bottomTrailing)
+        : LinearGradient(colors: [Color.cyan.opacity(0.9), Color.blue.opacity(0.9)],
+                         startPoint: .topLeading, endPoint: .bottomTrailing)
 
-        // Apply layout and decoration in separate steps
+        let text = HStack(spacing: 8) {
+            if found {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            Text(word)
+                .strikethrough(found)
+                .opacity(found ? 0.6 : 1.0)
+        }
+        .multilineTextAlignment(.center)
+        .lineLimit(nil)
+        .allowsTightening(false)
+        .fixedSize(horizontal: false, vertical: true)
+        .font(.system(size: 14, weight: .semibold, design: .rounded))
+        .foregroundStyle(.white)
+
         return text
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.gray.opacity(0.12))
+                    .fill(gradient)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
             )
+            .shadow(color: (found ? Color.black : Color.blue).opacity(0.15), radius: 6, x: 0, y: 3)
             .layoutPriority(1)
     }
 }
@@ -584,19 +754,20 @@ private struct WordChipView: View {
 private struct SlimProminentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold, design: .rounded))
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
             .foregroundStyle(Color.white)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(.tint)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(LinearGradient(colors: [.blue, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 0.8)
             )
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .shadow(color: Color.blue.opacity(0.25), radius: 10, x: 0, y: 6)
+            .opacity(configuration.isPressed ? 0.95 : 1.0)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
@@ -608,20 +779,99 @@ private struct SlimBorderedButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .semibold, design: .rounded))
-            .foregroundStyle(.tint)
-            .padding(.vertical, 6)
+            .foregroundStyle(.white)
+            .padding(.vertical, 7)
             .padding(.horizontal, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(scheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.03))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(.tint, lineWidth: 1)
-                    .opacity(0.6)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.white.opacity(0.22), lineWidth: 1)
             )
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .opacity(configuration.isPressed ? 0.95 : 1.0)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Decorative Views
+
+private struct AnimatedBackdrop: View {
+    @State private var t: CGFloat = 0
+
+    var body: some View {
+        TimelineView(.animation) { context in
+            let phase = CGFloat((context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 6)) / 6.0)
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.08, green: 0.09, blue: 0.15),
+                        Color(red: 0.05, green: 0.06, blue: 0.10)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                AngularGradient(
+                    gradient: Gradient(colors: [
+                        Color.purple.opacity(0.25),
+                        Color.blue.opacity(0.25),
+                        Color.cyan.opacity(0.25),
+                        Color.pink.opacity(0.25),
+                        Color.purple.opacity(0.25)
+                    ]),
+                    center: .center,
+                    angle: .degrees(Double(phase) * 360)
+                )
+                .blur(radius: 160)
+
+                // Vignette
+                RadialGradient(colors: [Color.black.opacity(0.0), Color.black.opacity(0.35)],
+                               center: .center, startRadius: 0, endRadius: 800)
+            }
+            .animation(.linear(duration: 6), value: phase)
+        }
+    }
+}
+
+private struct StatBadge: View {
+    let title: String
+    let value: String
+    let icon: String
+    let gradient: [Color]
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 22, height: 22)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title.uppercased())
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                Text(value)
+                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
     }
 }
