@@ -261,16 +261,7 @@ struct GameView: View {
     }
 
     private func chip(for w: PlacedWord) -> some View {
-        Text(w.word)
-            .strikethrough(w.found)
-            .opacity(w.found ? 0.4 : 1.0)
-            .multilineTextAlignment(.center)
-            .lineLimit(nil) // allow wrapping to avoid truncation
-            .fixedSize(horizontal: false, vertical: true) // grow vertically if needed
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color.gray.opacity(0.12))
-            .clipShape(Capsule())
+        WordChipView(word: w.word, found: w.found)
     }
 
     // Layout: first line shows "Find:" + first word; second line shows the remaining two words, centered.
@@ -553,6 +544,38 @@ private struct LeaderboardSheet: View {
         case 3: return Color.orange
         default: return Color.blue.opacity(0.85)
         }
+    }
+}
+
+// MARK: - Word Chip (extracted to avoid type-checker blowups)
+
+private struct WordChipView: View {
+    let word: String
+    let found: Bool
+
+    var body: some View {
+        // Build text first with basic styling
+        let text = Text(word)
+            .strikethrough(found)
+            .opacity(found ? 0.4 : 1.0)
+            .multilineTextAlignment(.center)
+            .lineLimit(nil) // allow wrapping to avoid truncation
+            .allowsTightening(false)
+            .fixedSize(horizontal: false, vertical: true)
+
+        // Apply layout and decoration in separate steps
+        return text
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.gray.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+            )
+            .layoutPriority(1)
     }
 }
 

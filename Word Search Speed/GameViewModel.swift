@@ -239,6 +239,8 @@ final class GameViewModel: ObservableObject {
         let s = selectedPathString()
         guard !s.isEmpty else { return }
 
+        var justFoundAWord = false
+
         for i in puzzle.words.indices {
             guard puzzle.words[i].found == false else { continue }
             let target = puzzle.words[i].word
@@ -246,14 +248,21 @@ final class GameViewModel: ObservableObject {
             if difficulty.allowBackwards {
                 if s == target || String(s.reversed()) == target {
                     puzzle.words[i].found = true
+                    justFoundAWord = true
                     break
                 }
             } else {
                 if s == target {
                     puzzle.words[i].found = true
+                    justFoundAWord = true
                     break
                 }
             }
+        }
+
+        // Add 5 seconds to the clock whenever a word is found
+        if justFoundAWord {
+            timeLeft += 5
         }
 
         if !puzzle.words.isEmpty && puzzle.words.allSatisfy({ $0.found }) {
@@ -368,3 +377,4 @@ final class GameViewModel: ObservableObject {
         }
     }
 }
+
