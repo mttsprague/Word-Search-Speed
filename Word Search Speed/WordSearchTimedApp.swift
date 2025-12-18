@@ -20,6 +20,7 @@ struct WordSearchTimedApp: App {
     }
 }
 
+@MainActor
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -41,22 +42,24 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         #if DEBUG
         // Ensure test ads on simulator and this device
         // Use your logged test device ID along with the simulator literal.
-        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = [
+        MobileAds.shared.requestConfiguration.testDeviceIdentifiers = [
             "SIMULATOR",
             "f950f1e4652072b41451e96ec6a559f3"
         ]
         #endif
 
-        GADMobileAds.sharedInstance().start { _ in
+        MobileAds.shared.start { _ in
             print("AdMob: started.")
-            AdManager.shared.preloadAll()
+            // Hop to the main actor before touching AdManager (which is @MainActor).
+            Task { @MainActor in
+                AdManager.shared.preloadAll()
+            }
         }
         #endif
 
-        // Authenticate Game Center
+        // Authenticate Game Center on the main actor.
         GameCenterManager.shared.authenticateLocalPlayer()
 
         return true
     }
 }
-

@@ -152,6 +152,17 @@ final class GameViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Pause/Resume timer for overlays/sheets
+
+    func pauseTimer() {
+        timer?.invalidate()
+    }
+
+    func resumeTimer() {
+        guard phase == .playing else { return }
+        startTimerAgain()
+    }
+
     // MARK: - Round transitions + Interstitial pacing
 
     func nextPuzzleTapped() {
@@ -185,8 +196,8 @@ final class GameViewModel: ObservableObject {
                 // Continue the same puzzle:
                 self.rewardedUsedThisRound = true
                 self.phase = .playing
-                // Give them +10s play window; this does not inflate score (soft penalty applied later)
-                self.timeLeft = 10
+                // Give them +15s play window; this does not inflate score (soft penalty applied later)
+                self.timeLeft = 15
                 self.startTimerAgain()
             }
         }
@@ -338,8 +349,8 @@ final class GameViewModel: ObservableObject {
         let wordsFound = puzzle.words.filter { $0.found }.count
         let wordPoints = wordsFound * basePerWord
 
-        // Soft penalty: if rewarded was used, subtract 10s from time used for scoring (never below 0)
-        let timeLeftForScoring = max(0, timeLeft - (rewardedUsedThisRound ? 10 : 0))
+        // Soft penalty: if rewarded was used, subtract 15s from time used for scoring (never below 0)
+        let timeLeftForScoring = max(0, timeLeft - (rewardedUsedThisRound ? 15 : 0))
         let mult = multiplier(for: difficulty)
         let timeBonus = timeLeftForScoring * mult
 

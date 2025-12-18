@@ -13,6 +13,7 @@ struct GameView: View {
     @StateObject private var ads = AdManager.shared
 
     @State private var showDifficultySheet = false
+    @State private var showingScoringInfo = false
 
     // Leaderboard state
     @State private var showingDailyTop = false
@@ -35,6 +36,23 @@ struct GameView: View {
 
             VStack(spacing: 16) {
                 header
+
+                // Info button above the puzzle
+                HStack {
+                    Spacer(minLength: 0)
+                    Button {
+                        vm.pauseTimer()
+                        showingScoringInfo = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle")
+                            Text("How scoring works")
+                        }
+                    }
+                    .buttonStyle(SlimBorderedButtonStyle())
+                    .padding(.horizontal)
+                    Spacer(minLength: 0)
+                }
 
                 ZStack {
                     // Board container with glass effect
@@ -127,6 +145,12 @@ struct GameView: View {
                 isLoading: isLoadingWeekly,
                 errorMessage: leaderboardErrorWeekly
             )
+        }
+        .sheet(isPresented: $showingScoringInfo, onDismiss: {
+            vm.resumeTimer()
+        }) {
+            ScoringInfoSheet()
+                .presentationDetents([.large])
         }
     }
 
@@ -437,7 +461,7 @@ struct GameView: View {
                                 Text("Words: \(b.wordsFound) × 100 = \(b.wordPoints)")
                                     .font(.caption)
                                     .opacity(0.85)
-                                Text("Time bonus: \(b.timeLeftUsedForScoring) × \(b.difficultyMultiplier) = \(b.timeBonus)\(b.rewardedPenaltyApplied ? " (−10s ad penalty)" : "")")
+                                Text("Time bonus: \(b.timeLeftUsedForScoring) × \(b.difficultyMultiplier) = \(b.timeBonus)\(b.rewardedPenaltyApplied ? " (−15s ad penalty)" : "")")
                                     .font(.caption)
                                     .opacity(0.85)
                             } else {
@@ -455,7 +479,7 @@ struct GameView: View {
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "play.circle.fill")
-                                Text("Continue +10s")
+                                Text("Continue +15s")
                                 Text(ads.isRewardedReady ? "" : "(Loading...)").opacity(0.7)
                             }
                         }
@@ -699,6 +723,42 @@ private struct LeaderboardSheet: View {
         case 2: return Color.gray
         case 3: return Color.orange
         default: return Color.blue.opacity(0.85)
+        }
+    }
+}
+
+// MARK: - Scoring Info
+
+private struct ScoringInfoSheet: View {
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Scoring")
+                        .font(.title2.weight(.bold))
+
+                    Group {
+                        Text("• Each word found = 100 points.")
+                        Text("• Time bonus = time left × difficulty multiplier.")
+                        Text("• Difficulty multipliers: Easy ×1, Medium ×2, Hard ×3.")
+                        Text("• Find a word during play: +5s added to the clock.")
+                        Text("• Continue after watching a rewarded ad: +15s play window, but a −15s time penalty is applied when computing the time bonus for that round.")
+                    }
+                    .font(.body)
+                    .opacity(0.92)
+
+                    Divider().opacity(0.3)
+
+                    Text("Example")
+                        .font(.headline)
+                    Text("If you finish with 12 seconds left on Hard: time bonus = 12 × 3 = 36. If you used the rewarded continue, we subtract 15s before scoring the time bonus. So with 12s showing, time used for scoring becomes max(0, 12 − 15) = 0.")
+                        .font(.callout)
+                        .opacity(0.85)
+                }
+                .padding()
+            }
+            .navigationTitle("How Scoring Works")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

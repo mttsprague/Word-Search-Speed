@@ -52,7 +52,7 @@ private struct AdaptiveBannerRepresentable: UIViewRepresentable {
         let container = ContainerView()
         container.backgroundColor = .clear
 
-        let banner = GADBannerView()
+        let banner = BannerView()
         banner.adUnitID = adUnitID
         banner.delegate = context.coordinator
 
@@ -86,9 +86,9 @@ private struct AdaptiveBannerRepresentable: UIViewRepresentable {
         Coordinator(height: $height)
     }
 
-    private func updateBannerSizeAndLoad(banner: GADBannerView, width: CGFloat) {
+    private func updateBannerSizeAndLoad(banner: BannerView, width: CGFloat) {
         // Compute anchored adaptive size for the current orientation and width
-        let adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(width)
+        let adSize = currentOrientationAnchoredAdaptiveBanner(width: width)
         banner.adSize = adSize
 
         let newHeight = adSize.size.height
@@ -99,11 +99,11 @@ private struct AdaptiveBannerRepresentable: UIViewRepresentable {
         }
 
         // Load/refresh the ad
-        banner.load(GADRequest())
+        banner.load(Request())
     }
 
     final class ContainerView: UIView {
-        var bannerView: GADBannerView?
+        var bannerView: BannerView?
         override var intrinsicContentSize: CGSize {
             if let bannerView {
                 return CGSize(width: UIView.noIntrinsicMetric, height: bannerView.adSize.size.height)
@@ -112,21 +112,21 @@ private struct AdaptiveBannerRepresentable: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, GADBannerViewDelegate {
+    final class Coordinator: NSObject, BannerViewDelegate {
         @Binding var height: CGFloat
 
         init(height: Binding<CGFloat>) {
             _height = height
         }
 
-        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             let h = bannerView.adSize.size.height
             DispatchQueue.main.async {
                 self.height = h
             }
         }
 
-        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             print("Banner failed to load: \(error.localizedDescription)")
             // Optional: collapse height on failure
             // DispatchQueue.main.async { self.height = 0 }
