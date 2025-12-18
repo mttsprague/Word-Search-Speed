@@ -40,14 +40,28 @@ final class AdManager: ObservableObject {
         isInterstitialReady = false
         interstitial = nil
 
+        #if DEBUG
+        let unitID = "ca-app-pub-3940256099942544/4411468910" // Google test interstitial
+        #else
+        let unitID = AdUnits.interstitial
+        #endif
+
         let request = Request()
-        InterstitialAd.load(with: AdUnits.interstitial, request: request) { [weak self] ad, _ in
+        print("AdManager: Loading interstitial: \(unitID)")
+        InterstitialAd.load(with: unitID, request: request) { [weak self] ad, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                if let error = error {
+                    print("AdManager: Interstitial failed to load: \(error.localizedDescription)")
+                    self.isInterstitialReady = false
+                    return
+                }
                 if let ad = ad {
+                    print("AdManager: Interstitial loaded.")
                     self.interstitial = ad
                     self.isInterstitialReady = true
                 } else {
+                    print("AdManager: Interstitial load returned nil ad.")
                     self.isInterstitialReady = false
                 }
             }
@@ -58,22 +72,58 @@ final class AdManager: ObservableObject {
         #endif
     }
 
-    func loadRewarded() {
+    func loadRewarded(retryAfter seconds: TimeInterval? = nil) {
         #if canImport(GoogleMobileAds)
         isRewardedReady = false
         rewarded = nil
 
-        let request = Request()
-        RewardedAd.load(with: AdUnits.rewarded, request: request) { [weak self] ad, _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                if let ad = ad {
-                    self.rewarded = ad
-                    self.isRewardedReady = true
-                } else {
-                    self.isRewardedReady = false
+        let loadBlock = { [weak self] in
+            guard let self else { return }
+            #if DEBUG
+            let unitID = "ca-app-pub-3940256099942544/5224354917" // Google test rewarded
+            #else
+            let unitID = AdUnits.rewarded
+            #endif
+
+            let request = Request()
+            print("AdManager: Loading rewarded: \(unitID)")
+            RewardedAd.load(with: unitID, request: request) { [weak self] ad, error in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if let error = error {
+                        print("AdManager: Rewarded failed to load: \(error.localizedDescription)")
+                        self.isRewardedReady = false
+                        // Simple backoff retry for transient issues (test-only helpful)
+                        #if DEBUG
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            self.loadRewarded()
+                        }
+                        #endif
+                        return
+                    }
+                    if let ad = ad {
+                        print("AdManager: Rewarded loaded.")
+                        self.rewarded = ad
+                        self.isRewardedReady = true
+                    } else {
+                        print("AdManager: Rewarded load returned nil ad.")
+                        self.isRewardedReady = false
+                        #if DEBUG
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            self.loadRewarded()
+                        }
+                        #endif
+                    }
                 }
             }
+        }
+
+        if let seconds = seconds {
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+                loadBlock()
+            }
+        } else {
+            loadBlock()
         }
         #else
         isRewardedReady = false
@@ -83,12 +133,19 @@ final class AdManager: ObservableObject {
 
     func showInterstitialIfReady() {
         #if canImport(GoogleMobileAds)
-        guard let ad = interstitial, isInterstitialReady else { return }
-        guard let vc = UIApplication.shared.topViewController() else { return }
+        guard let ad = interstitial, isInterstitialReady else {
+            print("AdManager: Interstitial not ready.")
+            return
+        }
+        guard let vc = UIApplication.shared.topViewController() else {
+            print("AdManager: No top view controller to present interstitial.")
+            return
+        }
 
         isInterstitialReady = false
         interstitial = nil
 
+        print("AdManager: Presenting interstitial.")
         ad.present(from: vc)
         loadInterstitial()
         #else
@@ -100,10 +157,12 @@ final class AdManager: ObservableObject {
     func showRewarded(completion: @escaping (Bool) -> Void) {
         #if canImport(GoogleMobileAds)
         guard let ad = rewarded, isRewardedReady else {
+            print("AdManager: Rewarded not ready.")
             completion(false)
             return
         }
         guard let vc = UIApplication.shared.topViewController() else {
+            print("AdManager: No top view controller to present rewarded.")
             completion(false)
             return
         }
@@ -111,11 +170,14 @@ final class AdManager: ObservableObject {
         isRewardedReady = false
         rewarded = nil
 
+        print("AdManager: Presenting rewarded.")
         ad.present(from: vc) {
+            print("AdManager: Reward earned.")
             completion(true)
         }
 
-        loadRewarded()
+        // Preload the next one
+        loadRewarded(retryAfter: 1)
         #else
         completion(false)
         #endif

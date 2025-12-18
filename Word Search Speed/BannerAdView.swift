@@ -15,49 +15,122 @@ import GoogleMobileAds
 struct BannerAdView: View {
     let adUnitID: String
 
-    // Observe consent so we don’t load before UMP completes.
-    @ObservedObject private var consent = ConsentManager.shared
-
     var body: some View {
         #if canImport(GoogleMobileAds)
-        Group {
-            if consent.canRequestAds {
-                BannerWrappedView(adUnitID: adUnitID)
-                    .frame(width: 160, height: 25)
-            } else {
-                // Reserve space so layout doesn’t jump while waiting for consent.
-                Color.clear
-                    .frame(width: 160, height: 25)
-            }
-        }
+        AdaptiveBannerContainer(adUnitID: adUnitID)
         #else
         // Placeholder when the ads SDK is unavailable (e.g., Previews/CI)
         Color.clear
-            .frame(width: 160, height: 25)
+            .frame(height: 0)
         #endif
     }
 }
 
 #if canImport(GoogleMobileAds)
-private struct BannerWrappedView: UIViewRepresentable {
+private struct AdaptiveBannerContainer: View {
     let adUnitID: String
+    @State private var height: CGFloat = 0
 
-    func makeUIView(context: Context) -> BannerView {
-        let view = BannerView(adSize: AdSizeBanner)
-        view.adUnitID = adUnitID
-        if let top = UIApplication.shared.topViewController() {
-            view.rootViewController = top
+    var body: some View {
+        GeometryReader { geo in
+            let width = max(1, geo.size.width)
+            AdaptiveBannerRepresentable(adUnitID: adUnitID, availableWidth: width, height: $height)
+                .frame(width: width, height: height)
+                .clipped()
         }
-        // By the time we’re here, UMP has completed; safe to load.
-        view.load(Request())
-        return view
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+    }
+}
+
+private struct AdaptiveBannerRepresentable: UIViewRepresentable {
+    let adUnitID: String
+    let availableWidth: CGFloat
+    @Binding var height: CGFloat
+
+    func makeUIView(context: Context) -> ContainerView {
+        let container = ContainerView()
+        container.backgroundColor = .clear
+
+        let banner = GADBannerView()
+        banner.adUnitID = adUnitID
+        banner.delegate = context.coordinator
+
+        if let top = UIApplication.shared.topViewController() {
+            banner.rootViewController = top
+        }
+
+        container.bannerView = banner
+        container.addSubview(banner)
+
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            banner.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            banner.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+
+        updateBannerSizeAndLoad(banner: banner, width: availableWidth)
+
+        return container
     }
 
-    func updateUIView(_ uiView: BannerView, context: Context) {
+    func updateUIView(_ container: ContainerView, context: Context) {
+        guard let banner = container.bannerView else { return }
         if let top = UIApplication.shared.topViewController() {
-            uiView.rootViewController = top
+            banner.rootViewController = top
+        }
+        updateBannerSizeAndLoad(banner: banner, width: availableWidth)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(height: $height)
+    }
+
+    private func updateBannerSizeAndLoad(banner: GADBannerView, width: CGFloat) {
+        // Compute anchored adaptive size for the current orientation and width
+        let adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(width)
+        banner.adSize = adSize
+
+        let newHeight = adSize.size.height
+        if abs(height - newHeight) > 0.5 {
+            DispatchQueue.main.async {
+                self.height = newHeight
+            }
+        }
+
+        // Load/refresh the ad
+        banner.load(GADRequest())
+    }
+
+    final class ContainerView: UIView {
+        var bannerView: GADBannerView?
+        override var intrinsicContentSize: CGSize {
+            if let bannerView {
+                return CGSize(width: UIView.noIntrinsicMetric, height: bannerView.adSize.size.height)
+            }
+            return CGSize(width: UIView.noIntrinsicMetric, height: 0)
+        }
+    }
+
+    final class Coordinator: NSObject, GADBannerViewDelegate {
+        @Binding var height: CGFloat
+
+        init(height: Binding<CGFloat>) {
+            _height = height
+        }
+
+        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+            let h = bannerView.adSize.size.height
+            DispatchQueue.main.async {
+                self.height = h
+            }
+        }
+
+        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+            print("Banner failed to load: \(error.localizedDescription)")
+            // Optional: collapse height on failure
+            // DispatchQueue.main.async { self.height = 0 }
         }
     }
 }
 #endif
-

@@ -37,17 +37,21 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
         #endif
 
-        // 1) Gather consent (UMP), then 2) optionally request ATT, then 3) start AdMob and preload ads.
-        ConsentManager.shared.gatherConsent {
-            ConsentManager.shared.requestATTIfNeeded {
-                #if canImport(GoogleMobileAds)
-                MobileAds.shared.start { _ in
-                    // Preload interstitial/rewarded once SDK is ready and consent flow finished.
-                    AdManager.shared.preloadAll()
-                }
-                #endif
-            }
+        #if canImport(GoogleMobileAds)
+        #if DEBUG
+        // Ensure test ads on simulator and this device
+        // Use your logged test device ID along with the simulator literal.
+        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = [
+            "SIMULATOR",
+            "f950f1e4652072b41451e96ec6a559f3"
+        ]
+        #endif
+
+        GADMobileAds.sharedInstance().start { _ in
+            print("AdMob: started.")
+            AdManager.shared.preloadAll()
         }
+        #endif
 
         // Authenticate Game Center
         GameCenterManager.shared.authenticateLocalPlayer()

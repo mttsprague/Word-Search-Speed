@@ -83,9 +83,8 @@ struct GameView: View {
 
                 wordChips
 
-                // Banner at bottom (stable impressions)
+                // Anchored adaptive banner at bottom (policy-safe)
                 BannerAdView(adUnitID: AdUnits.banner)
-                    .frame(width: 160, height: 25)
                     .padding(.top, 6)
                     .opacity(0.9)
             }

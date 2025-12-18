@@ -38,6 +38,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Word_Search_SpeedApp.swift,
 			);
 			target = C303AF772EF1ADBF00309FA7 /* Word Search Speed */;
 		};
