@@ -85,7 +85,9 @@ final class GameViewModel: ObservableObject {
         guard didStart == false else { return }
         didStart = true
 
-        AdManager.shared.preloadAll()
+        // Do NOT preload ads here anymore; AppDelegate preloads after consent.
+        // If you want a safety net in case AppDelegate didn’t preload (e.g., dev builds), you could:
+        // if ConsentManager.shared.canRequestAds { AdManager.shared.preloadAll() }
 
         // Load persisted difficulty if available. If not, prompt selection.
         if let saved = defaults.string(forKey: K.selectedDifficulty),

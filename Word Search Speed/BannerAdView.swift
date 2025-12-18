@@ -15,10 +15,21 @@ import GoogleMobileAds
 struct BannerAdView: View {
     let adUnitID: String
 
+    // Observe consent so we don’t load before UMP completes.
+    @ObservedObject private var consent = ConsentManager.shared
+
     var body: some View {
         #if canImport(GoogleMobileAds)
-        BannerWrappedView(adUnitID: adUnitID)
-            .frame(width: 160, height: 25)
+        Group {
+            if consent.canRequestAds {
+                BannerWrappedView(adUnitID: adUnitID)
+                    .frame(width: 160, height: 25)
+            } else {
+                // Reserve space so layout doesn’t jump while waiting for consent.
+                Color.clear
+                    .frame(width: 160, height: 25)
+            }
+        }
         #else
         // Placeholder when the ads SDK is unavailable (e.g., Previews/CI)
         Color.clear
@@ -37,6 +48,7 @@ private struct BannerWrappedView: UIViewRepresentable {
         if let top = UIApplication.shared.topViewController() {
             view.rootViewController = top
         }
+        // By the time we’re here, UMP has completed; safe to load.
         view.load(Request())
         return view
     }
@@ -48,3 +60,4 @@ private struct BannerWrappedView: UIViewRepresentable {
     }
 }
 #endif
+

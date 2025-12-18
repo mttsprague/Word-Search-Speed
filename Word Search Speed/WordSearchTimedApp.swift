@@ -37,10 +37,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
         #endif
 
-        #if canImport(GoogleMobileAds)
-        // Initialize Google Mobile Ads SDK (newer API surface).
-        MobileAds.shared.start { _ in }
-        #endif
+        // 1) Gather consent (UMP), then 2) optionally request ATT, then 3) start AdMob and preload ads.
+        ConsentManager.shared.gatherConsent {
+            ConsentManager.shared.requestATTIfNeeded {
+                #if canImport(GoogleMobileAds)
+                MobileAds.shared.start { _ in
+                    // Preload interstitial/rewarded once SDK is ready and consent flow finished.
+                    AdManager.shared.preloadAll()
+                }
+                #endif
+            }
+        }
 
         // Authenticate Game Center
         GameCenterManager.shared.authenticateLocalPlayer()
