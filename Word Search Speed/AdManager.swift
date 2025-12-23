@@ -46,7 +46,7 @@ final class AdManager: ObservableObject {
         let unitID = AdUnits.interstitial
         #endif
 
-        let request = Request()
+        let request = makeNonPersonalizedRequest()
         print("AdManager: Loading interstitial: \(unitID)")
         InterstitialAd.load(with: unitID, request: request) { [weak self] ad, error in
             Task { @MainActor [weak self] in
@@ -85,7 +85,7 @@ final class AdManager: ObservableObject {
             let unitID = AdUnits.rewarded
             #endif
 
-            let request = Request()
+            let request = makeNonPersonalizedRequest()
             print("AdManager: Loading rewarded: \(unitID)")
             RewardedAd.load(with: unitID, request: request) { [weak self] ad, error in
                 Task { @MainActor [weak self] in
@@ -93,7 +93,6 @@ final class AdManager: ObservableObject {
                     if let error = error {
                         print("AdManager: Rewarded failed to load: \(error.localizedDescription)")
                         self.isRewardedReady = false
-                        // Simple backoff retry for transient issues (test-only helpful)
                         #if DEBUG
                         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                             self.loadRewarded()
@@ -182,4 +181,15 @@ final class AdManager: ObservableObject {
         completion(false)
         #endif
     }
+
+    #if canImport(GoogleMobileAds)
+    private func makeNonPersonalizedRequest() -> Request {
+        let request = Request()
+        // Non-personalized ads flag for AdMob
+        let extras = Extras()
+        extras.additionalParameters = ["npa": "1"]
+        request.register(extras)
+        return request
+    }
+    #endif
 }

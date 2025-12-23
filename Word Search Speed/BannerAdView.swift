@@ -98,8 +98,12 @@ private struct AdaptiveBannerRepresentable: UIViewRepresentable {
             }
         }
 
-        // Load/refresh the ad
-        banner.load(Request())
+        // Load/refresh the ad with non-personalized flag
+        let request = Request()
+        let extras = Extras()
+        extras.additionalParameters = ["npa": "1"]
+        request.register(extras)
+        banner.load(request)
     }
 
     final class ContainerView: UIView {
