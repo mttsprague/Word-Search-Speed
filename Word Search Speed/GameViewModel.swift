@@ -31,18 +31,16 @@ final class GameViewModel: ObservableObject {
     enum Phase { case playing, won, lost }
 
     struct ScoreBreakdown: Equatable {
-        let wordsFound: Int
-        let wordPoints: Int
+        let baseCompletionPoints: Int
         let timeLeftUsedForScoring: Int
         let difficultyMultiplier: Int
         let timeBonus: Int
         let rewardedPenaltyApplied: Bool
 
-        var roundScore: Int { wordPoints + timeBonus }
+        var roundScore: Int { baseCompletionPoints + timeBonus }
 
         static let empty = ScoreBreakdown(
-            wordsFound: 0,
-            wordPoints: 0,
+            baseCompletionPoints: 0,
             timeLeftUsedForScoring: 0,
             difficultyMultiplier: 1,
             timeBonus: 0,
@@ -71,7 +69,13 @@ final class GameViewModel: ObservableObject {
     private var scoreFinalizedForCurrentRound = false
 
     // Scoring constants
-    private let basePerWord = 100
+    private func baseCompletion(for difficulty: Difficulty) -> Int {
+        switch difficulty {
+        case .easy: return 100
+        case .medium: return 200
+        case .hard: return 300
+        }
+    }
     private func multiplier(for difficulty: Difficulty) -> Int {
         switch difficulty {
         case .easy: return 1
@@ -86,8 +90,6 @@ final class GameViewModel: ObservableObject {
         didStart = true
 
         // Do NOT preload ads here anymore; AppDelegate preloads after consent.
-        // If you want a safety net in case AppDelegate didn’t preload (e.g., dev builds), you could:
-        // if ConsentManager.shared.canRequestAds { AdManager.shared.preloadAll() }
 
         // Load persisted difficulty if available. If not, prompt selection.
         if let saved = defaults.string(forKey: K.selectedDifficulty),
@@ -142,11 +144,10 @@ final class GameViewModel: ObservableObject {
                 guard self.phase == .playing else { return }
                 self.timeLeft -= 1
                 if self.timeLeft <= 0 {
-                    // Timer ran out: reset cumulative score immediately
-                    self.totalScore = 0
+                    // Timer ran out: mark loss and stop timer.
                     self.phase = .lost
                     self.timer?.invalidate()
-                    // Do NOT finalize score here; user may continue with rewarded.
+                    // Do NOT reset or submit score here. That happens when the user proceeds.
                 }
             }
         }
@@ -166,9 +167,13 @@ final class GameViewModel: ObservableObject {
     // MARK: - Round transitions + Interstitial pacing
 
     func nextPuzzleTapped() {
-        // If the round ended in a loss and the user did not continue, finalize score now.
+        // If the round ended in a loss and the user did not continue, submit accumulated score and reset for the next game.
         if phase == .lost && scoreFinalizedForCurrentRound == false {
-            finalizeRoundScore()
+            if totalScore > 0 {
+                GameCenterManager.shared.submit(score: totalScore)
+            }
+            // Mark finalized so we don't submit twice if this button is spammed
+            scoreFinalizedForCurrentRound = true
         }
 
         roundsCompleted += 1
@@ -211,11 +216,10 @@ final class GameViewModel: ObservableObject {
                 guard self.phase == .playing else { return }
                 self.timeLeft -= 1
                 if self.timeLeft <= 0 {
-                    // Timer ran out again: reset cumulative score immediately
-                    self.totalScore = 0
+                    // Timer ran out again: mark loss and stop timer.
                     self.phase = .lost
                     self.timer?.invalidate()
-                    // Still do not finalize here; allow user to choose next or continue.
+                    // Do NOT reset or submit score here.
                 }
             }
         }
@@ -346,17 +350,22 @@ final class GameViewModel: ObservableObject {
         guard scoreFinalizedForCurrentRound == false else { return }
         scoreFinalizedForCurrentRound = true
 
-        let wordsFound = puzzle.words.filter { $0.found }.count
-        let wordPoints = wordsFound * basePerWord
+        // Only award points on a win (completed puzzle).
+        guard phase == .won else {
+            // No per-round points on loss. Keep breakdown empty and lastRoundScore = 0.
+            lastRoundBreakdown = .empty
+            lastRoundScore = 0
+            return
+        }
 
         // Soft penalty: if rewarded was used, subtract 15s from time used for scoring (never below 0)
         let timeLeftForScoring = max(0, timeLeft - (rewardedUsedThisRound ? 15 : 0))
         let mult = multiplier(for: difficulty)
         let timeBonus = timeLeftForScoring * mult
+        let base = baseCompletion(for: difficulty)
 
         let breakdown = ScoreBreakdown(
-            wordsFound: wordsFound,
-            wordPoints: wordPoints,
+            baseCompletionPoints: base,
             timeLeftUsedForScoring: timeLeftForScoring,
             difficultyMultiplier: mult,
             timeBonus: timeBonus,
@@ -367,8 +376,7 @@ final class GameViewModel: ObservableObject {
         lastRoundScore = breakdown.roundScore
         totalScore += breakdown.roundScore
 
-        // Submit to Game Center
-        GameCenterManager.shared.submit(score: breakdown.roundScore)
+        // Do NOT submit here. Submission happens only after a failed round.
     }
 
     // MARK: - Persistence helpers

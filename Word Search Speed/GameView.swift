@@ -457,13 +457,17 @@ struct GameView: View {
                             let b = vm.lastRoundBreakdown
                             Text("Round Score: \(vm.lastRoundScore)")
                                 .font(.headline)
-                            if b != .empty {
-                                Text("Words: \(b.wordsFound) × 100 = \(b.wordPoints)")
+                            if b != .empty && vm.phase == .won {
+                                Text("Completion bonus: \(b.baseCompletionPoints)")
                                     .font(.caption)
                                     .opacity(0.85)
                                 Text("Time bonus: \(b.timeLeftUsedForScoring) × \(b.difficultyMultiplier) = \(b.timeBonus)\(b.rewardedPenaltyApplied ? " (−15s ad penalty)" : "")")
                                     .font(.caption)
                                     .opacity(0.85)
+                            } else if vm.phase == .lost {
+                                Text("Your total \(vm.totalScore) will be submitted when you proceed.")
+                                    .font(.caption)
+                                    .opacity(0.8)
                             } else {
                                 Text("Score will finalize when you proceed.")
                                     .font(.caption)
@@ -738,11 +742,12 @@ private struct ScoringInfoSheet: View {
                         .font(.title2.weight(.bold))
 
                     Group {
-                        Text("• Each word found = 100 points.")
-                        Text("• Time bonus = time left × difficulty multiplier.")
-                        Text("• Difficulty multipliers: Easy ×1, Medium ×2, Hard ×3.")
+                        Text("• Complete a puzzle to earn a base bonus: Easy 100, Medium 200, Hard 300.")
+                        Text("• Time bonus = time left × difficulty multiplier (Easy ×1, Medium ×2, Hard ×3).")
                         Text("• Find a word during play: +5s added to the clock.")
                         Text("• Continue after watching a rewarded ad: +15s play window, but a −15s time penalty is applied when computing the time bonus for that round.")
+                        Text("• Scores keep accumulating across completed puzzles. They reset only after a failed puzzle (if you don’t continue) or if you change difficulty.")
+                        Text("• Your accumulated score is submitted to the leaderboard after a failed puzzle.")
                     }
                     .font(.body)
                     .opacity(0.92)
@@ -751,7 +756,7 @@ private struct ScoringInfoSheet: View {
 
                     Text("Example")
                         .font(.headline)
-                    Text("If you finish with 12 seconds left on Hard: time bonus = 12 × 3 = 36. If you used the rewarded continue, we subtract 15s before scoring the time bonus. So with 12s showing, time used for scoring becomes max(0, 12 − 15) = 0.")
+                    Text("If you finish with 12 seconds left on Hard: time bonus = 12 × 3 = 36. If you used the rewarded continue, we subtract 15s before scoring the time bonus. So with 12s showing, time used for scoring becomes max(0, 12 − 15) = 0. Your round score would be 300 + 0 = 300.")
                         .font(.callout)
                         .opacity(0.85)
                 }
