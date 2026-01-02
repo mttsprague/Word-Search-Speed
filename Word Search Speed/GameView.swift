@@ -7,6 +7,7 @@
 
 import SwiftUI
 import GameKit
+import StoreKit
 
 struct GameView: View {
     @StateObject private var vm = GameViewModel()
@@ -322,7 +323,8 @@ struct GameView: View {
                         cellView(
                             char: vm.puzzle.grid.isEmpty ? " " : vm.puzzle.grid[r][c],
                             isFound: vm.isFoundCell(p),
-                            isSelected: vm.isSelected(p)
+                            isSelected: vm.isSelected(p),
+                            difficulty: vm.difficulty
                         )
                         .frame(width: cell, height: cell)
                         .position(x: x + cell/2, y: y + cell/2)
@@ -343,8 +345,17 @@ struct GameView: View {
         }
     }
 
-    private func cellView(char: Character, isFound: Bool, isSelected: Bool) -> some View {
+    private func cellView(char: Character, isFound: Bool, isSelected: Bool, difficulty: Difficulty) -> some View {
         let base = RoundedRectangle(cornerRadius: 8, style: .continuous)
+        
+        // Scale font size based on difficulty
+        let fontSize: CGFloat = {
+            switch difficulty {
+            case .easy: return 24
+            case .medium: return 20
+            case .hard: return 18
+            }
+        }()
 
         return ZStack {
             base
@@ -362,7 +373,7 @@ struct GameView: View {
                         radius: isSelected || isFound ? 6 : 3, x: 0, y: 2)
 
             Text(String(char))
-                .font(.system(size: 18, weight: .heavy, design: .rounded))
+                .font(.system(size: fontSize, weight: .heavy, design: .rounded))
                 .foregroundStyle(
                     isFound ? Color.white.opacity(0.95) :
                     isSelected ? Color.white.opacity(0.95) :
@@ -534,7 +545,20 @@ struct GameView: View {
                         }
                     }
                     .buttonStyle(SlimBorderedButtonStyle())
+// Rate Us button
+                    Button {
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                            SKStoreReviewController.requestReview(in: windowScene)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill")
+                            Text("Rate Us")
+                        }
+                    }
+                    .buttonStyle(SlimBorderedButtonStyle())
 
+                    
                     Text("Interstitial: \(ads.isInterstitialReady ? "Ready" : "…")  •  Rewarded: \(ads.isRewardedReady ? "Ready" : "…")")
                         .font(.caption2)
                         .opacity(0.6)
@@ -555,9 +579,9 @@ private struct DifficultySelectionSheet: View {
             Text("Select Difficulty")
                 .font(.headline)
 
-            DifficultyRow(title: Difficulty.easy.title, subtitle: "10×10 • 3 words • 30s", action: { select(.easy) })
-            DifficultyRow(title: Difficulty.medium.title, subtitle: "12×12 • 3 words • 30s", action: { select(.medium) })
-            DifficultyRow(title: Difficulty.hard.title, subtitle: "14×14 • 3 words • 30s", action: { select(.hard) })
+            DifficultyRow(title: Difficulty.easy.title, subtitle: "10×10 • 3 words • 45s", action: { select(.easy) })
+            DifficultyRow(title: Difficulty.medium.title, subtitle: "12×12 • 3 words • 45s", action: { select(.medium) })
+            DifficultyRow(title: Difficulty.hard.title, subtitle: "14×14 • 3 words • 45s", action: { select(.hard) })
         }
         .padding()
     }

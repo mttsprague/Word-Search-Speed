@@ -23,6 +23,7 @@ final class AdManager: ObservableObject {
     #if canImport(GoogleMobileAds)
     private var interstitial: InterstitialAd?
     private var rewarded: RewardedAd?
+    private var interstitialDelegate: InterstitialDelegate?
     #else
     private var interstitial: Any?
     private var rewarded: Any?
@@ -130,14 +131,16 @@ final class AdManager: ObservableObject {
         #endif
     }
 
-    func showInterstitialIfReady() {
+    func showInterstitialIfReady(onDismiss: (() -> Void)? = nil) {
         #if canImport(GoogleMobileAds)
         guard let ad = interstitial, isInterstitialReady else {
             print("AdManager: Interstitial not ready.")
+            onDismiss?()
             return
         }
         guard let vc = UIApplication.shared.topViewController() else {
             print("AdManager: No top view controller to present interstitial.")
+            onDismiss?()
             return
         }
 
@@ -145,10 +148,17 @@ final class AdManager: ObservableObject {
         interstitial = nil
 
         print("AdManager: Presenting interstitial.")
+        
+        // Set up a delegate to track when the ad is dismissed
+        // Store it as a property to prevent it from being deallocated
+        interstitialDelegate = InterstitialDelegate(onDismiss: onDismiss)
+        ad.fullScreenContentDelegate = interstitialDelegate
+        
         ad.present(from: vc)
         loadInterstitial()
         #else
         // No-op when GoogleMobileAds is unavailable
+        onDismiss?()
         #endif
     }
 
@@ -193,3 +203,25 @@ final class AdManager: ObservableObject {
     }
     #endif
 }
+
+#if canImport(GoogleMobileAds)
+// Delegate to handle interstitial ad lifecycle events
+private class InterstitialDelegate: NSObject, GADFullScreenContentDelegate {
+    private let onDismiss: (() -> Void)?
+    
+    init(onDismiss: (() -> Void)?) {
+        self.onDismiss = onDismiss
+        super.init()
+    }
+    
+    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+        print("AdManager: Interstitial dismissed.")
+        onDismiss?()
+    }
+    
+    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        print("AdManager: Interstitial failed to present: \(error.localizedDescription)")
+        onDismiss?()
+    }
+}
+#endif

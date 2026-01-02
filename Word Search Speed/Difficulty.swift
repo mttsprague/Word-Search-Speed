@@ -29,7 +29,7 @@ enum Difficulty: CaseIterable, Hashable {
     // Use 3 words for all difficulties
     var wordCount: Int { 3 }
 
-    var seconds: Int { 30 }
+    var seconds: Int { 45 }
 
     var wordLengthRange: ClosedRange<Int> {
         switch self {

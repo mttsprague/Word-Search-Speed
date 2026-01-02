@@ -12,7 +12,7 @@ import Combine
 final class GameViewModel: ObservableObject {
     @Published var difficulty: Difficulty = .easy
     @Published var puzzle: Puzzle = Puzzle(size: 10, grid: [], words: [])
-    @Published var timeLeft: Int = 30
+    @Published var timeLeft: Int = 45
     @Published var phase: Phase = .playing
 
     @Published var selectedPath: [GridPoint] = []
@@ -180,12 +180,20 @@ final class GameViewModel: ObservableObject {
 
         // Interstitial every 3 rounds, between puzzles only
         if roundsCompleted % 3 == 0 {
-            AdManager.shared.showInterstitialIfReady()
+            // Show the ad first, then start the new round after dismissal
+            AdManager.shared.showInterstitialIfReady { [weak self] in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    // Start the new round AFTER the ad is dismissed
+                    let shouldReset = (self.phase == .lost)
+                    self.newRound(resetScore: shouldReset)
+                }
+            }
+        } else {
+            // No ad, proceed directly to the new round
+            let shouldReset = (phase == .lost)
+            newRound(resetScore: shouldReset)
         }
-
-        // If we are advancing after a loss, that starts a new game: reset score.
-        let shouldReset = (phase == .lost)
-        newRound(resetScore: shouldReset)
     }
 
     // MARK: - Rewarded continue
